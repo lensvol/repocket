@@ -6,7 +6,10 @@ import click
 from pocket import Pocket
 
 
-def first_time_setup(consumer_key):
+def get_consumer_key():
+    return click.prompt('Please enter your Pocket consumer key')
+
+def get_access_token(consumer_key):
     request_token = Pocket.get_request_token(
         consumer_key=consumer_key,
         redirect_uri='localhost',
@@ -26,10 +29,9 @@ def first_time_setup(consumer_key):
         return credentials['access_token']
 
 
-if len(sys.argv) == 2:
-    CONSUMER_KEY = sys.argv[1]
+if __name__ == '__main__':
+    consumer_key = get_consumer_key()
+    access_token = get_access_token(consumer_key)
 
-    token = first_time_setup(CONSUMER_KEY)
-    click.echo('Your access token: {}'.format(token))
-else:
-    click.echo('Usage: python repocket/main.py <CONSUMER_KEY>')
+    click.echo('Your consumer key: {}'.format(consumer_key))
+    click.echo('Your access token: {}'.format(access_token))
