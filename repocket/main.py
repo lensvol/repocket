@@ -4,8 +4,12 @@ import sys
 import click
 import os
 import yaml
+from collections import namedtuple
 
 from pocket import Pocket
+
+
+PocketItem = namedtuple('PocketItem', ['id', 'url', 'tags', 'title'])
 
 
 def save_credentials(consumer_key, access_token, path=None):
@@ -87,9 +91,30 @@ if __name__ == '__main__':
     click.secho(access_token)
     click.echo()
 
+    items = []
     pocket = Pocket(consumer_key, access_token)
-    items = pocket.get(sort='newest', count=at_most_count)[0]['list']
+    response_items = pocket.get(
+        sort='newest',
+        count=at_most_count,
+        detailType='complete',
+    )[0]['list']
+
+    for item_id, resp_item in response_items.iteritems():
+        pocket_item = PocketItem(
+            item_id,
+            resp_item['resolved_url'],
+            resp_item.get('tags', {}).keys(),
+            resp_item['resolved_title']
+        )
+        items.append(pocket_item)
 
     click.secho('Saved items:', fg='cyan')
-    for ind, (item_id, item) in enumerate(items.iteritems()):
-        click.echo(u'{}. {}'.format(ind + 1, item['resolved_title']))
+    for item in items:
+        click.secho(u'Title:\t', fg='cyan', nl=False)
+        click.echo(item.title)
+        click.secho('URL:\t', fg='cyan', nl=False)
+        click.echo(item.url)
+        if item.tags:
+            click.secho('Tags:\t', fg='cyan', nl=False)
+            click.echo(', '.join(item.tags))
+        click.echo()
