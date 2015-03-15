@@ -73,6 +73,7 @@ def load_credentials(path=None):
 
 
 if __name__ == '__main__':
+    at_most_count = 10
     consumer_key, access_token = load_credentials()
 
     if not consumer_key or not access_token:
@@ -84,3 +85,11 @@ if __name__ == '__main__':
     click.secho(consumer_key)
     click.secho('Your access token: ', fg='cyan', nl=False)
     click.secho(access_token)
+    click.echo()
+
+    pocket = Pocket(consumer_key, access_token)
+    items = pocket.get(sort='newest', count=at_most_count)[0]['list']
+
+    click.secho('Saved items:', fg='cyan')
+    for ind, (item_id, item) in enumerate(items.iteritems()):
+        click.echo(u'{}. {}'.format(ind + 1, item['resolved_title']))
