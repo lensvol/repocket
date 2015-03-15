@@ -22,8 +22,8 @@ def save_credentials(consumer_key, access_token, path=None):
         cfg = {}
 
     cfg['credentials'] = {
-        'consumer_key': consumer_key,
-        'access_token': access_token,
+        'consumer_key': str(consumer_key),
+        'access_token': str(access_token),
     }
 
     with open(path, 'w') as fp:
@@ -56,11 +56,31 @@ def get_access_token(consumer_key):
         return credentials['access_token']
 
 
+def load_credentials(path=None):
+    if not path:
+        path = os.path.join(
+            os.path.expanduser('~'),
+            '.repocket.yml',
+        )
+
+    try:
+        with open(path, 'r') as fp:
+            cfg = yaml.load(fp.read())
+            creds = cfg.get('credentials', {})
+            return creds.get('consumer_key'), creds.get('access_token')
+    except IOError:
+        return None, None
+
+
 if __name__ == '__main__':
-    consumer_key = get_consumer_key()
-    access_token = get_access_token(consumer_key)
+    consumer_key, access_token = load_credentials()
 
-    save_credentials(consumer_key, access_token)
+    if not consumer_key or not access_token:
+        consumer_key = get_consumer_key()
+        access_token = get_access_token(consumer_key)
+        save_credentials(consumer_key, access_token)
 
-    click.echo('Your consumer key: {}'.format(consumer_key))
-    click.echo('Your access token: {}'.format(access_token))
+    click.secho('Your consumer key: ', fg='cyan', nl=False)
+    click.secho(consumer_key)
+    click.secho('Your access token: ', fg='cyan', nl=False)
+    click.secho(access_token)
