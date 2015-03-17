@@ -73,9 +73,6 @@ def load_credentials(path=None):
 
 
 def retrieve_items(pocket, count=10, sort=None, full=True):
-    if not sort:
-        sort = 'newest'
-
     call_args = dict(sort=sort or 'newest')
     if full:
         call_args['detailType'] = 'complete'
@@ -85,7 +82,7 @@ def retrieve_items(pocket, count=10, sort=None, full=True):
     return pocket.get(**call_args)[0]['list']
 
 
-if __name__ == '__main__':
+def processor():
     at_most_count = 10
     consumer_key, access_token = load_credentials()
 
@@ -123,3 +120,7 @@ if __name__ == '__main__':
             click.secho('Tags:\t', fg='cyan', nl=False)
             click.echo(', '.join(item.tags))
         click.echo()
+
+
+if __name__ == '__main__':
+    processor()
