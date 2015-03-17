@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import sys
 import click
 import os
 import yaml
@@ -14,10 +13,7 @@ PocketItem = namedtuple('PocketItem', ['id', 'url', 'tags', 'title'])
 
 def save_credentials(consumer_key, access_token, path=None):
     if not path:
-        path = os.path.join(
-            os.path.expanduser('~'),
-            '.repocket.yml',
-        )
+        path = os.path.join(os.path.expanduser('~'), '.repocket.yml')
 
     try:
         with open(path, 'r') as fp:
@@ -76,6 +72,19 @@ def load_credentials(path=None):
         return None, None
 
 
+def retrieve_items(pocket, count=10, sort=None, full=True):
+    if not sort:
+        sort = 'newest'
+
+    call_args = dict(sort=sort or 'newest')
+    if full:
+        call_args['detailType'] = 'complete'
+    if count:
+        call_args['count'] = count
+
+    return pocket.get(**call_args)[0]['list']
+
+
 if __name__ == '__main__':
     at_most_count = 10
     consumer_key, access_token = load_credentials()
@@ -92,12 +101,8 @@ if __name__ == '__main__':
     click.echo()
 
     items = []
-    pocket = Pocket(consumer_key, access_token)
-    response_items = pocket.get(
-        sort='newest',
-        count=at_most_count,
-        detailType='complete',
-    )[0]['list']
+    api_connector = Pocket(consumer_key, access_token)
+    response_items = retrieve_items(api_connector)
 
     for item_id, resp_item in response_items.iteritems():
         pocket_item = PocketItem(
