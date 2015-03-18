@@ -7,6 +7,8 @@ from collections import namedtuple
 
 from pocket import Pocket
 
+from rules import DEFAULT_RULES, compile_rules
+
 
 PocketItem = namedtuple('PocketItem', ['id', 'url', 'tags', 'title'])
 
@@ -107,17 +109,29 @@ def processor():
 
     items = []
     api_connector = Pocket(consumer_key, access_token)
+    rules = compile_rules(DEFAULT_RULES)
 
     click.secho('Saved items:', fg='cyan')
-    for item in retrieve_items(api_connector):
-        click.secho(u'Title:\t', fg='cyan', nl=False)
-        click.echo(item.title)
-        click.secho('URL:\t', fg='cyan', nl=False)
-        click.echo(item.url)
-        if item.tags:
-            click.secho('Tags:\t', fg='cyan', nl=False)
-            click.echo(', '.join(item.tags))
-        click.echo()
+    for item in retrieve_items(api_connector, count=at_most_count):
+        suggested_for_item = set()
+
+        for rule in rules:
+            tags = rule.suggest_tags(item)
+            if tags:
+                suggested_for_item.update(tags)
+            new_tags = suggested_for_item - set(item.tags)
+            if new_tags:
+                click.secho(u'Title:\t', fg='cyan', nl=False)
+                click.echo(item.title)
+                click.secho('URL:\t', fg='cyan', nl=False)
+                click.echo(item.url)
+                click.secho('Suggested tags:\t', fg='cyan', nl=False)
+                click.echo(', '.join(suggested_for_item))
+                click.echo()
+
+                api_connector.tags_add(item.id, ','.join(list(new_tags)))
+
+    api_connector.commit()
 
 
 if __name__ == '__main__':
