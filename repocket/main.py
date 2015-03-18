@@ -79,7 +79,15 @@ def retrieve_items(pocket, count=10, sort=None, full=True):
     if count:
         call_args['count'] = count
 
-    return pocket.get(**call_args)[0]['list']
+    returned_items = pocket.get(**call_args)[0]['list']
+
+    for item_id, resp_item in returned_items.iteritems():
+        yield PocketItem(
+            item_id,
+            resp_item['resolved_url'],
+            resp_item.get('tags', {}).keys(),
+            resp_item['resolved_title']
+        )
 
 
 def processor():
@@ -99,19 +107,9 @@ def processor():
 
     items = []
     api_connector = Pocket(consumer_key, access_token)
-    response_items = retrieve_items(api_connector)
-
-    for item_id, resp_item in response_items.iteritems():
-        pocket_item = PocketItem(
-            item_id,
-            resp_item['resolved_url'],
-            resp_item.get('tags', {}).keys(),
-            resp_item['resolved_title']
-        )
-        items.append(pocket_item)
 
     click.secho('Saved items:', fg='cyan')
-    for item in items:
+    for item in retrieve_items(api_connector):
         click.secho(u'Title:\t', fg='cyan', nl=False)
         click.echo(item.title)
         click.secho('URL:\t', fg='cyan', nl=False)
