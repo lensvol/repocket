@@ -110,7 +110,6 @@ def processor(count, process_all):
     click.secho(access_token)
     click.echo()
 
-    items = []
     api_connector = Pocket(consumer_key, access_token)
     rules = compile_rules(DEFAULT_RULES)
     modified_anything = False
