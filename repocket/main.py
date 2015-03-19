@@ -91,9 +91,11 @@ def retrieve_items(pocket, count=10, sort=None, full=True):
             resp_item['resolved_title']
         )
 
-
-def processor():
-    at_most_count = 10
+@click.command()
+@click.option('--count', default=25, help='Number of items to process.')
+@click.option('-a', '--process-all', is_flag=True)
+def processor(count, process_all):
+    at_most_count = process_all and 0 or count
     consumer_key, access_token = load_credentials()
 
     if not consumer_key or not access_token:
