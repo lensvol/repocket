@@ -91,6 +91,7 @@ def retrieve_items(pocket, count=10, sort=None, full=True):
             resp_item['resolved_title']
         )
 
+
 @click.command()
 @click.option('--count', default=25, help='Number of items to process.')
 @click.option('-a', '--process-all', is_flag=True)
@@ -112,6 +113,7 @@ def processor(count, process_all):
     items = []
     api_connector = Pocket(consumer_key, access_token)
     rules = compile_rules(DEFAULT_RULES)
+    modified_anything = False
 
     click.secho('Saved items:', fg='cyan')
     for item in retrieve_items(api_connector, count=at_most_count):
@@ -132,8 +134,10 @@ def processor(count, process_all):
                 click.echo()
 
                 api_connector.tags_add(item.id, ','.join(list(new_tags)))
+                modified_anything = True
 
-    api_connector.commit()
+    if modified_anything:
+        api_connector.commit()
 
 
 if __name__ == '__main__':
