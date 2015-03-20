@@ -103,8 +103,9 @@ def retrieve_items(pocket, count=10, sort=None, full=True):
 
 @command()
 @option('--count', default=25, help='Number of items to process.')
+@option('--dry-run', is_flag=True)
 @option('-a', '--process-all', is_flag=True)
-def processor(count, process_all):
+def processor(count, process_all, dry_run):
     at_most_count = process_all and 0 or count
     consumer_key, access_token = load_credentials()
 
@@ -150,7 +151,11 @@ def processor(count, process_all):
             echo(', '.join(suggested_tags))
             echo()
 
-        api_connector.commit()
+        if not dry_run:
+            api_connector.commit()
+            secho('Changes are sent to server.', fg='green')
+        else:
+            secho('"Dry run", no changes are sent to server.', fg='yellow')
 
 
 if __name__ == '__main__':
