@@ -112,30 +112,35 @@ def processor(count, process_all):
 
     api_connector = Pocket(consumer_key, access_token)
     rules = compile_rules(DEFAULT_RULES)
-    modified_anything = False
+    modified_items = []
 
-    click.secho('Saved items:', fg='cyan')
-    for item in retrieve_items(api_connector, count=at_most_count):
-        suggested_for_item = set()
+    with click.progressbar(
+        retrieve_items(api_connector, count=at_most_count),
+        label=click.style('Processing items', fg='cyan'),
+    ) as items:
+        for item in items:
+            suggested_for_item = set()
 
-        for rule in rules:
-            tags = rule.suggest_tags(item)
-            if tags:
-                suggested_for_item.update(tags)
-            new_tags = suggested_for_item - set(item.tags)
-            if new_tags:
-                click.secho(u'Title:\t', fg='cyan', nl=False)
-                click.echo(item.title)
-                click.secho('URL:\t', fg='cyan', nl=False)
-                click.echo(item.url)
-                click.secho('Suggested tags:\t', fg='cyan', nl=False)
-                click.echo(', '.join(suggested_for_item))
-                click.echo()
+            for rule in rules:
+                tags = rule.suggest_tags(item)
+                if tags:
+                    suggested_for_item.update(tags)
+                new_tags = suggested_for_item - set(item.tags)
+                if new_tags:
+                    api_connector.tags_add(item.id, ','.join(list(new_tags)))
+                    modified_items.append((item, new_tags))
 
-                api_connector.tags_add(item.id, ','.join(list(new_tags)))
-                modified_anything = True
+    if modified_items:
+        click.echo()
+        for item, suggested_tags in modified_items:
+            click.secho(u'Title:\t', fg='cyan', nl=False)
+            click.echo(item.title)
+            click.secho('URL:\t', fg='cyan', nl=False)
+            click.echo(item.url)
+            click.secho('Suggested tags:\t', fg='cyan', nl=False)
+            click.echo(', '.join(suggested_tags))
+            click.echo()
 
-    if modified_anything:
         api_connector.commit()
 
 
