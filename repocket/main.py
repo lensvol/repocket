@@ -1,6 +1,15 @@
 #!/usr/bin/python
 
-import click
+from click import (
+    command,
+    option,
+    secho,
+    echo,
+    progressbar,
+    prompt,
+    confirm,
+    style,
+)
 import os
 import yaml
 from collections import namedtuple
@@ -35,7 +44,7 @@ def save_credentials(consumer_key, access_token, path=None):
 
 
 def get_consumer_key():
-    return click.prompt('Please enter your Pocket consumer key')
+    return prompt('Please enter your Pocket consumer key')
 
 
 def get_access_token(consumer_key):
@@ -48,9 +57,9 @@ def get_access_token(consumer_key):
         redirect_uri='localhost',
     )
 
-    click.echo('Please, open this URL in your browser: {}'.format(auth_url))
-    if click.confirm('Did you went to that link?'):
-        click.echo('Getting credentials...')
+    echo('Please, open this URL in your browser: {}'.format(auth_url))
+    if confirm('Did you went to that link?'):
+        echo('Getting credentials...')
         credentials = Pocket.get_credentials(
             consumer_key=consumer_key,
             code=request_token,
@@ -92,9 +101,9 @@ def retrieve_items(pocket, count=10, sort=None, full=True):
         )
 
 
-@click.command()
-@click.option('--count', default=25, help='Number of items to process.')
-@click.option('-a', '--process-all', is_flag=True)
+@command()
+@option('--count', default=25, help='Number of items to process.')
+@option('-a', '--process-all', is_flag=True)
 def processor(count, process_all):
     at_most_count = process_all and 0 or count
     consumer_key, access_token = load_credentials()
@@ -104,19 +113,19 @@ def processor(count, process_all):
         access_token = get_access_token(consumer_key)
         save_credentials(consumer_key, access_token)
 
-    click.secho('Your consumer key: ', fg='cyan', nl=False)
-    click.secho(consumer_key)
-    click.secho('Your access token: ', fg='cyan', nl=False)
-    click.secho(access_token)
-    click.echo()
+    secho('Your consumer key: ', fg='cyan', nl=False)
+    secho(consumer_key)
+    secho('Your access token: ', fg='cyan', nl=False)
+    secho(access_token)
+    echo()
 
     api_connector = Pocket(consumer_key, access_token)
     rules = compile_rules(DEFAULT_RULES)
     modified_items = []
 
-    with click.progressbar(
+    with progressbar(
         retrieve_items(api_connector, count=at_most_count),
-        label=click.style('Processing items', fg='cyan'),
+        label=style('Processing items', fg='cyan'),
     ) as items:
         for item in items:
             suggested_for_item = set()
@@ -131,15 +140,15 @@ def processor(count, process_all):
                     modified_items.append((item, new_tags))
 
     if modified_items:
-        click.echo()
+        echo()
         for item, suggested_tags in modified_items:
-            click.secho(u'Title:\t', fg='cyan', nl=False)
-            click.echo(item.title)
-            click.secho('URL:\t', fg='cyan', nl=False)
-            click.echo(item.url)
-            click.secho('Suggested tags:\t', fg='cyan', nl=False)
-            click.echo(', '.join(suggested_tags))
-            click.echo()
+            secho(u'Title:\t', fg='cyan', nl=False)
+            echo(item.title)
+            secho('URL:\t', fg='cyan', nl=False)
+            echo(item.url)
+            secho('Suggested tags:\t', fg='cyan', nl=False)
+            echo(', '.join(suggested_tags))
+            echo()
 
         api_connector.commit()
 
