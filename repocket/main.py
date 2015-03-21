@@ -8,7 +8,6 @@ from click import (
     progressbar,
     prompt,
     confirm,
-    style,
 )
 import os
 import yaml
@@ -24,7 +23,7 @@ PocketItem = namedtuple('PocketItem', ['id', 'url', 'tags', 'title'])
 
 def save_config(path, cfg_dict):
     with open(path, 'w') as fp:
-        fp.write(yaml.dump(cfg))
+        fp.write(yaml.dump(cfg_dict))
 
     return True
 
@@ -108,8 +107,7 @@ def processor(count, process_all, dry_run):
 
     api_connector = Pocket(consumer_key, access_token)
     cfg.setdefault('rules', DEFAULT_RULES)
-    with open(cfg_path, 'w') as fp:
-        fp.write(yaml.dump(cfg))
+    save_config(cfg_path, cfg)
 
     secho('Processing items...', fg='cyan')
     rules = compile_rules(cfg['rules'])
