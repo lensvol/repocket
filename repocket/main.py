@@ -22,25 +22,19 @@ from rules import DEFAULT_RULES, compile_rules
 PocketItem = namedtuple('PocketItem', ['id', 'url', 'tags', 'title'])
 
 
-def save_credentials(consumer_key, access_token, path=None):
-    if not path:
-        path = os.path.join(os.path.expanduser('~'), '.repocket.yml')
-
-    try:
-        with open(path, 'r') as fp:
-            cfg = yaml.load(fp.read())
-    except IOError:
-        cfg = {}
-
-    cfg['credentials'] = {
-        'consumer_key': str(consumer_key),
-        'access_token': str(access_token),
-    }
-
+def save_config(path, cfg_dict):
     with open(path, 'w') as fp:
         fp.write(yaml.dump(cfg))
 
     return True
+
+
+def load_config(path):
+    try:
+        with open(path, 'r') as fp:
+            return yaml.load(fp.read())
+    except IOError:
+        return {}
 
 
 def get_consumer_key():
@@ -67,22 +61,6 @@ def get_access_token(consumer_key):
         return credentials['access_token']
 
 
-def load_credentials(path=None):
-    if not path:
-        path = os.path.join(
-            os.path.expanduser('~'),
-            '.repocket.yml',
-        )
-
-    try:
-        with open(path, 'r') as fp:
-            cfg = yaml.load(fp.read())
-            creds = cfg.get('credentials', {})
-            return creds.get('consumer_key'), creds.get('access_token')
-    except IOError:
-        return None, None
-
-
 def retrieve_items(pocket, count=10, sort=None, full=True):
     call_args = dict(sort=sort or 'newest')
     if full:
@@ -106,13 +84,21 @@ def retrieve_items(pocket, count=10, sort=None, full=True):
 @option('--dry-run', is_flag=True)
 @option('-a', '--process-all', is_flag=True)
 def processor(count, process_all, dry_run):
-    at_most_count = process_all and 0 or count
-    consumer_key, access_token = load_credentials()
+    cfg_path = os.path.join(
+        os.path.expanduser('~'),
+        '.repocket.yml',
+    )
+    cfg = load_config(cfg_path)
+    creds = cfg.get('credentials', {})
+    consumer_key, access_token = creds.get('consumer_key'), creds.get('access_token')
 
     if not consumer_key or not access_token:
         consumer_key = get_consumer_key()
         access_token = get_access_token(consumer_key)
-        save_credentials(consumer_key, access_token)
+        cfg['credentials'] = {
+            'consumer_key': str(consumer_key),
+            'access_token': str(access_token),
+        }
 
     secho('Your consumer key: ', fg='cyan', nl=False)
     secho(consumer_key)
@@ -121,24 +107,24 @@ def processor(count, process_all, dry_run):
     echo()
 
     api_connector = Pocket(consumer_key, access_token)
-    rules = compile_rules(DEFAULT_RULES)
+    cfg.setdefault('rules', DEFAULT_RULES)
+    with open(cfg_path, 'w') as fp:
+        fp.write(yaml.dump(cfg))
+
+    secho('Processing items...', fg='cyan')
+    rules = compile_rules(cfg['rules'])
     modified_items = []
-
-    with progressbar(
-        retrieve_items(api_connector, count=at_most_count),
-        label=style('Processing items', fg='cyan'),
-    ) as items:
-        for item in items:
-            suggested_for_item = set()
-
-            for rule in rules:
-                tags = rule.suggest_tags(item)
-                if tags:
-                    suggested_for_item.update(tags)
-                new_tags = suggested_for_item - set(item.tags)
-                if new_tags:
-                    api_connector.tags_add(item.id, ','.join(list(new_tags)))
-                    modified_items.append((item, new_tags))
+    items = retrieve_items(api_connector, count=process_all and 0 or count)
+    for item in items:
+        suggested_for_item = set()
+        for rule in rules:
+            tags = rule.suggest_tags(item)
+            if tags:
+                suggested_for_item.update(tags)
+            new_tags = suggested_for_item - set(item.tags)
+            if new_tags:
+                api_connector.tags_add(item.id, ','.join(list(new_tags)))
+                modified_items.append((item, new_tags))
 
     if modified_items:
         echo()

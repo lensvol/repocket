@@ -6,11 +6,11 @@ import re
 DEFAULT_RULES = [
     {
         'rule': '.*github\.com.*',
-        'tags': ('programming', 'github'),
+        'tags': ['programming', 'github'],
     },
     {
         'rule': '.*blog\.*',
-        'tags': ('blog',),
+        'tags': ['blog',],
     },
 ]
 
