@@ -131,6 +131,9 @@ def processor(count, process_all, dry_run):
             echo(item.title)
             secho('URL:\t', fg='cyan', nl=False)
             echo(item.url)
+            secho('Existing tags:\t', fg='cyan', nl=False)
+            if item.tags:
+                echo(', '.join(item.tags))
             secho('Added tags:\t', fg='cyan', nl=False)
             echo(', '.join(suggested_tags))
             echo()
