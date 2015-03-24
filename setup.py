@@ -25,7 +25,7 @@ setup(
     url='https://github.com/lensvol/repocket',
     keywords=['pocket', 'tag'],
     long_description=long_description,
-    version='0.0.1',
+    version='0.1.0',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
