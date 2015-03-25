@@ -5,12 +5,12 @@ import re
 
 DEFAULT_RULES = [
     {
-        'rule': '.*github\.com.*',
+        'rule': '.*github\.com/([a-z0-9]+)/.*',
         'tags': ['programming', 'github'],
     },
     {
         'rule': '.*blog\.*',
-        'tags': ['blog',],
+        'tags': ['blog'],
     },
 ]
 
@@ -23,8 +23,11 @@ class Rule(object):
         self.tags = tags
 
     def suggest_tags(self, item):
-        if self.rule_expr.match(item.url):
-            return self.tags
+        m = self.rule_expr.match(item.url)
+        if m:
+            result = set(self.tags)
+            result.update(m.groups())
+            return result
 
 
 def compile_rules(ruleset):
