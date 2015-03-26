@@ -6,7 +6,7 @@ import re
 DEFAULT_RULES = [
     {
         'rule': '.*github\.com/([a-z0-9]+)/.*',
-        'tags': ['programming', 'github'],
+        'tags': ['programming', 'github', '{0}'],
     },
     {
         'rule': '.*blog\.*',
@@ -25,8 +25,17 @@ class Rule(object):
     def suggest_tags(self, item):
         m = self.rule_expr.match(item.url)
         if m:
-            result = set(self.tags)
-            result.update(m.groups())
+            result = set()
+            for t in self.tags:
+                try:
+                    tag = t.format(*m.groups())
+                except IndexError:
+                    tag = ''
+
+                if not tag:
+                    continue
+                result.add(tag)
+
             return result
 
 
