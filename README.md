@@ -25,6 +25,8 @@ Available options:
 
 ## Rule syntax
 
+### Basic syntax
+
 Rules are read from 'rules' section of YAML file located at `~/.repocket.yml`.
 
 Each rule is a map, containing two keys:
@@ -40,3 +42,18 @@ Example:
       tags: [blog]
 
 If there is no rules specified in YAML file, two rules above are used and then saved to `repocket.yml`.
+
+### Dynamic tags
+
+You can also generate individual tags using regex named groups. For each of the specified tags will be formatted using standard `.format()` [substitution syntax](https://docs.python.org/2/library/string.html#format-examples).
+
+Example:
+
+    - rule: .*github\.com/([a-z0-9]+)/.*
+      tags: [programming, github, '{0}']
+
+Result:
+
+     Title:	lensvol/repocket
+     URL:	https://github.com/lensvol/repocket
+     Added tags:	github, programming, lensvol
