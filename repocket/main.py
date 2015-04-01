@@ -5,7 +5,6 @@ from click import (
     option,
     secho,
     echo,
-    progressbar,
     prompt,
     confirm,
 )
@@ -24,7 +23,6 @@ PocketItem = namedtuple('PocketItem', ['id', 'url', 'tags', 'title'])
 def save_config(path, cfg_dict):
     with open(path, 'w') as fp:
         fp.write(yaml.dump(cfg_dict))
-
     return True
 
 
@@ -78,6 +76,19 @@ def retrieve_items(pocket, count=10, sort=None, full=True):
         )
 
 
+def print_item(item, suggested_tags):
+    secho(u'Title:\t', fg='cyan', nl=False)
+    echo(item.title)
+    secho('URL:\t', fg='cyan', nl=False)
+    echo(item.url)
+    if item.tags:
+        secho('Existing tags:\t', fg='cyan', nl=False)
+        echo(', '.join(item.tags))
+    secho('Added tags:\t', fg='cyan', nl=False)
+    echo(', '.join(suggested_tags))
+    echo()
+
+
 @command()
 @option('--count', default=25, help='Number of items to process.')
 @option('--dry-run', is_flag=True)
@@ -89,7 +100,8 @@ def processor(count, process_all, dry_run):
     )
     cfg = load_config(cfg_path)
     creds = cfg.get('credentials', {})
-    consumer_key, access_token = creds.get('consumer_key'), creds.get('access_token')
+    consumer_key = creds.get('consumer_key')
+    access_token = creds.get('access_token')
 
     if not consumer_key or not access_token:
         consumer_key = get_consumer_key()
@@ -117,26 +129,16 @@ def processor(count, process_all, dry_run):
         suggested_for_item = set()
         for rule in rules:
             tags = rule.suggest_tags(item)
-            if tags:
-                suggested_for_item.update(tags)
+            suggested_for_item.update(tags or [])
             new_tags = suggested_for_item - set(item.tags)
             if new_tags:
-                api_connector.tags_add(item.id, ','.join(list(new_tags)))
                 modified_items.append((item, new_tags))
 
     if modified_items:
         echo()
-        for item, suggested_tags in modified_items:
-            secho(u'Title:\t', fg='cyan', nl=False)
-            echo(item.title)
-            secho('URL:\t', fg='cyan', nl=False)
-            echo(item.url)
-            if item.tags:
-                secho('Existing tags:\t', fg='cyan', nl=False)
-                echo(', '.join(item.tags))
-            secho('Added tags:\t', fg='cyan', nl=False)
-            echo(', '.join(suggested_tags))
-            echo()
+        for saved_item, suggested_tags in modified_items:
+            print_item(saved_item, suggested_tags)
+            api_connector.tags_add(item.id, ','.join(list(new_tags)))
 
         if not dry_run:
             api_connector.commit()
