@@ -1,21 +1,13 @@
 #!/usr/bin/python
 
-from click import (
-    command,
-    option,
-    secho,
-    echo,
-    prompt,
-    confirm,
-)
 import os
-import yaml
 from collections import namedtuple
 
+import yaml
+from click import command, confirm, echo, option, prompt, secho
 from pocket import Pocket
 
 from rules import DEFAULT_RULES, compile_rules
-
 
 PocketItem = namedtuple('PocketItem', ['id', 'url', 'tags', 'title'])
 
@@ -66,7 +58,6 @@ def retrieve_items(pocket, count=10, sort=None, full=True):
         call_args['count'] = count
 
     returned_items = pocket.get(**call_args)[0]['list']
-
     for item_id, resp_item in returned_items.iteritems():
         yield PocketItem(
             item_id,
@@ -119,10 +110,10 @@ def processor(count, process_all, dry_run):
 
     api_connector = Pocket(consumer_key, access_token)
     cfg.setdefault('rules', DEFAULT_RULES)
+    rules = compile_rules(cfg['rules'])
     save_config(cfg_path, cfg)
 
     secho('Processing items...', fg='cyan')
-    rules = compile_rules(cfg['rules'])
     modified_items = []
     items = retrieve_items(api_connector, count=process_all and 0 or count)
     for item in items:
