@@ -129,14 +129,15 @@ def processor(count, process_all, dry_run):
         echo()
         for saved_item, suggested_tags in modified_items:
             print_item(saved_item, suggested_tags)
-            api_connector.tags_add(item.id, ','.join(list(new_tags)))
+            api_connector.tags_add(saved_item.id, ','.join(list(suggested_tags)))
 
         if not dry_run:
             api_connector.commit()
             secho('Changes are sent to server.', fg='green')
         else:
             secho('"Dry run", no changes are sent to server.', fg='yellow')
-
+    else:
+        secho('No changes have been made.', fg='green')
 
 if __name__ == '__main__':
     processor()
