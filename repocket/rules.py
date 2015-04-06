@@ -24,19 +24,20 @@ class Rule(object):
 
     def suggest_tags(self, item):
         m = self.rule_expr.match(item.url)
-        if m:
-            result = set()
-            for t in self.tags:
-                try:
-                    tag = t.format(*m.groups())
-                except IndexError:
-                    tag = ''
+        if not m:
+            return set()
 
-                if not tag:
-                    continue
-                result.add(tag)
+        result = set()
+        for t in self.tags:
+            try:
+                tag = t.format(*m.groups())
+            except IndexError:
+                tag = ''
 
-            return result
+            if not tag:
+                continue
+            result.add(tag)
+        return result
 
 
 def compile_rules(ruleset):

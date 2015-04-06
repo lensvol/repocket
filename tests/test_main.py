@@ -74,6 +74,11 @@ TEST_RESPONSE_DATA = {
     }
 }
 
+TEST_EMPTY_RESPONSE_DATA = {
+    'status': '1',
+    'list': {},
+}
+
 @pytest.fixture
 def pocket_mock(request):
     fake_pocket = MagicMock()
@@ -91,3 +96,10 @@ def test_retrieve_items(pocket_mock):
         '1', 'https://google.com/',
         ['google'], 'Google Home Page',
     )
+
+    pocket_mock.get.return_value = (
+        TEST_EMPTY_RESPONSE_DATA,
+        TEST_RESPONSE_HEADERS,
+    )
+    items = list(retrieve_items(pocket_mock))
+    assert len(items) == 0
