@@ -40,7 +40,7 @@ setup(
         'pocket==0.3.5',
         'PyYAML==3.11',
     ],
-    packages=['repocket'],
+    packages=['repocket', 'tests'],
     entry_points={
         'console_scripts': ['repocket=repocket.main:processor']
     },

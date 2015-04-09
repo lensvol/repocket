@@ -57,3 +57,8 @@ Result:
      Title:	lensvol/repocket
      URL:	https://github.com/lensvol/repocket
      Added tags:	github, programming, lensvol
+
+
+## Running tests
+ 
+    ./py.test
