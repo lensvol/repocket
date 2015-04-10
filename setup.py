@@ -2,11 +2,20 @@
 
 import os
 
-
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
+from setuptools.command.test import test as TestCommand
+
+class PyTest(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+    def run_tests(self):
+        import pytest
+        pytest.main(self.test_args)
 
 description = 'Automatic rule-based tag suggestor for Pocket'
 if os.path.exists('README.md'):
@@ -14,7 +23,6 @@ if os.path.exists('README.md'):
         long_description = fp.read()
 else:
     long_description = description
-
 
 setup(
     description=description,
@@ -40,6 +48,8 @@ setup(
         'pocket==0.3.5',
         'PyYAML==3.11',
     ],
+    tests_require=['pytest'],
+    cmdclass = {'test': PyTest},
     packages=['repocket', 'tests'],
     entry_points={
         'console_scripts': ['repocket=repocket.main:processor']
